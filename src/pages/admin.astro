@@ -1,0 +1,474 @@
+---
+// src/pages/admin.astro
+import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+
+const url = new URL(Astro.request.url);
+const statusSukses = url.searchParams.get('sukses');
+const statusError = url.searchParams.get('error');
+
+let pesanSukses = statusSukses ? 'Data berhasil diperbarui atau diterbitkan!' : '';
+let pesanError = statusError || '';
+
+// Ambil data dari KEDUA tabel (posts dan news)
+let posts = [];
+let newsList = [];
+
+try {
+  const { data: postsData } = await supabase
+    .from('posts')
+    .select('id, title, category, created_at, content')
+    .order('created_at', { ascending: false })
+    .limit(10);
+    
+  if (postsData) posts = postsData;
+
+  const { data: newsData } = await supabase
+    .from('news')
+    .select('id, title, source, created_at, content')
+    .order('created_at', { ascending: false })
+    .limit(10);
+    
+  if (newsData) newsList = newsData;
+} catch (e) {
+  console.error("Gagal mengambil data database:", e);
+}
+
+let tujuanRedirect = '';
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const postId = formData.get('postId')?.toString(); 
+    const contentType = formData.get('contentType')?.toString();
+    const title = formData.get('title')?.toString().trim();
+    const content = formData.get('content')?.toString().trim();
+
+    if (title && content && content !== '<p><br></p>') {
+      
+      const imageFiles = formData.getAll('news_images'); 
+      const uploadedUrls = [];
+
+      for (const file of imageFiles) {
+        if (file instanceof File && file.size > 0) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('news-images')
+            .upload(fileName, file, {
+              contentType: file.type,
+              upsert: true
+            });
+
+          if (!uploadError && uploadData) {
+            const { data: urlData } = supabase.storage
+              .from('news-images')
+              .getPublicUrl(fileName);
+              
+            if (urlData?.publicUrl) {
+              uploadedUrls.push(urlData.publicUrl);
+            }
+          }
+        }
+      }
+
+      // --- EKSEKUSI DATA (UPDATE ATAU INSERT) ---
+      if (postId) {
+        if (contentType === 'news') {
+          const source = formData.get('source')?.toString().trim() || 'Internal';
+          const updateData = { title, content, source };
+          if (uploadedUrls.length > 0) updateData.images = uploadedUrls;
+
+          const { error } = await supabase
+            .from('news')
+            .update(updateData)
+            .eq('id', postId);
+
+          tujuanRedirect = error 
+            ? `/admin?error=${encodeURIComponent('Gagal update berita: ' + error.message)}`
+            : '/admin?sukses=1';
+        } else {
+          const category = formData.get('category')?.toString().trim();
+          if (!category) {
+            tujuanRedirect = `/admin?error=${encodeURIComponent('Kategori artikel wajib diisi!')}`;
+          } else {
+            const updateData = { title, category, content };
+            if (uploadedUrls.length > 0) updateData.images = uploadedUrls;
+
+            const { error } = await supabase
+              .from('posts')
+              .update(updateData)
+              .eq('id', postId);
+
+            tujuanRedirect = error 
+              ? `/admin?error=${encodeURIComponent('Gagal update artikel: ' + error.message)}`
+              : '/admin?sukses=1';
+          }
+        }
+
+      } else {
+        if (contentType === 'news') {
+          const source = formData.get('source')?.toString().trim() || 'Internal';
+          const { error } = await supabase
+            .from('news')
+            .insert([{ title, content, source, images: uploadedUrls }]);
+
+          tujuanRedirect = error ? `/admin?error=${encodeURIComponent(error.message)}` : '/terima-kasih';
+        } else {
+          const category = formData.get('category')?.toString().trim();
+          if (!category) {
+            tujuanRedirect = `/admin?error=${encodeURIComponent('Kategori artikel wajib diisi!')}`;
+          } else {
+            const { error } = await supabase
+              .from('posts')
+              .insert([{ title, category, content, images: uploadedUrls }]);
+
+            tujuanRedirect = error ? `/admin?error=${encodeURIComponent(error.message)}` : '/terima-kasih';
+          }
+        }
+      }
+
+    } else {
+      tujuanRedirect = `/admin?error=${encodeURIComponent('Mohon isi semua kolom!')}`;
+    }
+  } catch (e) {
+    tujuanRedirect = `/admin?error=${encodeURIComponent('Terjadi gangguan sistem internal.')}`;
+  }
+}
+
+if (tujuanRedirect) {
+  return Astro.redirect(tujuanRedirect);
+}
+---
+
+<Layout>
+  <div id="previewModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn">
+      <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
+        <h3 class="font-bold text-gray-800 flex items-center gap-2">👁️ Live Preview</h3>
+        <button id="closePreviewBtn" type="button" class="text-gray-500 hover:text-red-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50 font-bold text-sm">
+          ✕ Tutup Preview
+        </button>
+      </div>
+      <div class="p-8 md:p-12 overflow-y-auto w-full">
+        <div class="max-w-3xl mx-auto">
+          <div class="flex items-center gap-3 mb-6">
+            <span id="previewCategory" class="text-xs font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded-full uppercase tracking-wider hidden"></span>
+            <span id="previewSource" class="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider hidden"></span>
+          </div>
+          <h1 id="previewTitle" class="text-3xl md:text-5xl font-black text-gray-900 mb-8 leading-tight">Judul</h1>
+          <hr class="border-gray-200 mb-8" />
+          <div id="previewContent" class="preview-article-style text-gray-700 text-lg leading-relaxed"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto mt-32 p-8 bg-white rounded-xl shadow-lg border border-gray-200 relative z-10">
+    <h1 class="text-2xl font-bold mb-6 text-blue-900">Dashboard Admin Konten</h1>
+    
+    {pesanSukses && <div id="toast-notif" class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm font-medium">✅ {pesanSukses}</div>}
+    {pesanError && <div id="toast-notif" class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-medium">❌ {pesanError}</div>}
+
+    <form id="adminForm" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+      <input type="hidden" name="postId" id="hiddenPostId" value="" />
+      
+      <div class="flex flex-col gap-1">
+        <label for="contentType" class="text-xs font-bold text-gray-500 uppercase tracking-wide px-1">Jenis Konten:</label>
+        <select name="contentType" id="contentType" class="p-3 border border-gray-300 rounded-lg bg-white font-medium text-gray-700 focus:ring-2 focus:ring-blue-900 focus:outline-none" required>
+          <option value="education">ARTIKEL EDUKASI (POSTS)</option>
+          <option value="news">BERITA EKONOMI GLOBAL (NEWS)</option>
+        </select>
+      </div>
+
+      <input id="inputTitle" name="title" type="text" placeholder="Judul Postingan / Berita" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none font-medium text-gray-800" required />
+
+      <div id="categoryContainer" class="flex flex-col gap-1">
+        <label for="category" class="text-xs font-bold text-gray-500 uppercase tracking-wide px-1">Pilih Kategori Artikel:</label>
+        <select name="category" id="category" class="p-3 border border-gray-300 rounded-lg bg-white font-medium text-gray-700 focus:ring-2 focus:ring-blue-900 focus:outline-none">
+          <option value="personal-finance">PERSONAL FINANCE</option>
+          <option value="investment">INVESTMENT</option>
+          <option value="crypto-basics">CRYPTO BASICS</option>
+          <option value="market-analysis">MARKET ANALYSIS</option>
+        </select>
+      </div>
+
+      <div id="sourceContainer" class="flex flex-col gap-1" style="display: none;">
+        <label for="source" class="text-xs font-bold text-gray-500 uppercase tracking-wide px-1">Sumber Berita:</label>
+        <input id="inputSource" name="source" type="text" placeholder="Contoh: Bloomberg, Reuters" class="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:outline-none font-medium text-gray-800" />
+      </div>
+
+      <div id="imageContainer" class="flex flex-col gap-1">
+        <label for="news_images" class="text-xs font-bold text-gray-500 uppercase tracking-wide px-1">Upload Gambar (Opsional saat edit):</label>
+        <input name="news_images" id="news_images" type="file" accept="image/*" multiple class="p-2.5 border border-gray-300 rounded-lg text-sm text-gray-600 bg-gray-50 file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:bg-blue-900 file:text-white" />
+        <div id="fileListContainer" class="flex flex-col gap-2 mt-2"></div>
+      </div>
+      
+      <input type="hidden" name="content" id="hiddenContent" />
+      <div class="flex flex-col rounded-lg border border-gray-300 overflow-hidden bg-white">
+        <div id="editor" class="h-64 bg-white text-gray-800"></div>
+      </div>
+
+      <div class="flex gap-3 mt-2">
+        <button id="submitBtn" type="submit" class="flex-1 bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-800 transition font-bold">Publish Konten</button>
+        <button id="cancelEditBtn" type="button" class="hidden bg-gray-200 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-300 transition font-bold">Batal Edit</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="max-w-3xl mx-auto my-12"><hr class="border-gray-200" /></div>
+
+  <div class="max-w-3xl mx-auto flex flex-col gap-12 mb-32">
+    
+    <div class="bg-white rounded-xl p-8 shadow-lg border border-gray-200">
+      <h2 class="text-xl font-bold text-blue-900 mb-6 flex items-center gap-2">📚 Artikel Edukasi Terkini ({posts.length})</h2>
+      <div class="flex flex-col gap-6">
+        {posts.length > 0 ? posts.map((post) => (
+          <div class="p-4 border-b border-gray-100 last:border-none flex flex-col gap-2 data-post-card" data-id={post.id} data-title={post.title} data-category={post.category} data-type="education">
+            <div class="hidden raw-html-holder" set:html={post.content}></div>
+            <div class="flex justify-between items-start gap-4">
+              <h3 class="font-bold text-gray-800">{post.title}</h3>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10px] bg-blue-50 text-blue-900 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">{post.category?.replace('-', ' ')}</span>
+                <button type="button" class="trigger-edit-btn text-xs bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-md font-bold transition-colors">✏️ Edit</button>
+              </div>
+            </div>
+          </div>
+        )) : <p class="text-gray-400 text-sm italic text-center">Belum ada artikel edukasi.</p>}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-8 shadow-lg border border-gray-200">
+      <h2 class="text-xl font-bold text-emerald-950 mb-6 flex items-center gap-2">📰 Berita Global Terkini ({newsList.length})</h2>
+      <div class="flex flex-col gap-6">
+        {newsList.length > 0 ? newsList.map((news) => (
+          <div class="p-4 border-b border-gray-100 last:border-none flex flex-col gap-2 data-post-card" data-id={news.id} data-title={news.title} data-source={news.source} data-type="news">
+            <div class="hidden raw-html-holder" set:html={news.content}></div>
+            <div class="flex justify-between items-start gap-4">
+              <h3 class="font-bold text-gray-800">{news.title}</h3>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Src: {news.source || 'Internal'}</span>
+                <button type="button" class="trigger-edit-btn text-xs bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-md font-bold transition-colors">✏️ Edit</button>
+              </div>
+            </div>
+          </div>
+        )) : <p class="text-gray-400 text-sm italic text-center">Belum ada berita global.</p>}
+      </div>
+    </div>
+
+  </div>
+</Layout>
+
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js" is:inline></script>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. INITIALIZE QUILL DENGAN HANDLER TERINTEGRASI (STANDAR QUILL V2)
+const quill = new Quill('#editor', {
+  theme: 'snow',
+  placeholder: 'Tulis isi konten di sini... (Gunakan ikon tabel jika ingin membuat tabel)',
+  modules: {
+    toolbar: {
+      container: [
+        ['bold', 'italic', 'underline'],
+        ['link', 'table'], 
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['clean', 'preview']
+      ],
+      handlers: {
+        // Mendaftarkan tombol preview langsung saat inisialisasi
+        'preview': function() {
+          bukaModalPreview();
+        }
+      }
+    }
+  }
+});
+
+    // Menambahkan fungsionalitas kustom tombol preview ke toolbar
+    const toolbar = quill.getModule('toolbar');
+    toolbar.addHandler('preview', function() {
+      bukaModalPreview();
+    });
+
+    // 2. MODAL PREVIEW LOGIC
+    const previewModal = document.getElementById('previewModal');
+    const closePreviewBtn = document.getElementById('closePreviewBtn');
+    
+    function bukaModalPreview() {
+      const judul = document.getElementById('inputTitle').value;
+      const kontenHtml = quill.getSemanticHTML();
+      const jenisKonten = document.getElementById('contentType').value;
+      
+      document.getElementById('previewTitle').innerText = judul.trim() !== '' ? judul : 'Judul Belum Diisi';
+      document.getElementById('previewContent').innerHTML = (kontenHtml && kontenHtml !== '<p><br></p>') ? kontenHtml : '<p class="text-gray-400 italic">Konten kosong...</p>';
+      
+      const elKategori = document.getElementById('previewCategory');
+      const elSumber = document.getElementById('previewSource');
+
+      if (jenisKonten === 'education') {
+        elKategori.innerText = document.getElementById('category').value.replace('-', ' ');
+        elKategori.classList.remove('hidden');
+        elSumber.classList.add('hidden');
+      } else {
+        elSumber.innerText = "Source: " + (document.getElementById('inputSource').value || 'Internal');
+        elSumber.classList.remove('hidden');
+        elKategori.classList.add('hidden');
+      }
+      previewModal.classList.remove('hidden');
+    }
+
+    closePreviewBtn.addEventListener('click', () => previewModal.classList.add('hidden'));
+
+    // 3. FORM CONDITION SYNC
+    const contentTypeSelect = document.getElementById('contentType');
+    const categoryContainer = document.getElementById('categoryContainer');
+    const sourceContainer = document.getElementById('sourceContainer');
+    const categorySelect = document.getElementById('category');
+
+    function perbaruiTampilanForm(pilihan) {
+      if (pilihan === 'news') {
+        categoryContainer.style.setProperty('display', 'none', 'important');
+        categorySelect.removeAttribute('required');
+        sourceContainer.style.setProperty('display', 'flex', 'important');
+      } else {
+        categoryContainer.style.setProperty('display', 'flex', 'important');
+        categorySelect.setAttribute('required', 'required');
+        sourceContainer.style.setProperty('display', 'none', 'important');
+      }
+    }
+
+    contentTypeSelect.addEventListener('change', function() {
+      perbaruiTampilanForm(this.value);
+    });
+
+    // 4. MULTI-TABLE LIVE EDIT SYSTEM
+    const form = document.getElementById('adminForm');
+    const hiddenPostId = document.getElementById('hiddenPostId');
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const inputTitle = document.getElementById('inputTitle');
+    const inputSource = document.getElementById('inputSource');
+
+    document.querySelectorAll('.trigger-edit-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const card = this.closest('.data-post-card');
+        const id = card.getAttribute('data-id');
+        const title = card.getAttribute('data-title');
+        const type = card.getAttribute('data-type'); // Mendeteksi 'news' atau 'education'
+        const rawHtml = card.querySelector('.raw-html-holder').innerHTML;
+
+        hiddenPostId.value = id;
+        inputTitle.value = title;
+        contentTypeSelect.value = type;
+        perbaruiTampilanForm(type);
+
+        if (type === 'education') {
+          categorySelect.value = card.getAttribute('data-category');
+        } else {
+          inputSource.value = card.getAttribute('data-source') || '';
+        }
+
+        quill.clipboard.dangerouslyPasteHTML(rawHtml);
+
+        submitBtn.innerText = 'Simpan Perubahan';
+        submitBtn.classList.replace('bg-blue-900', 'bg-amber-600');
+        submitBtn.classList.replace('hover:bg-blue-800', 'hover:bg-amber-700');
+        cancelEditBtn.classList.remove('hidden');
+
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+
+    cancelEditBtn.addEventListener('click', function() {
+      hiddenPostId.value = '';
+      form.reset();
+      quill.setContents([]);
+      perbaruiTampilanForm(contentTypeSelect.value);
+      submitBtn.innerText = 'Publish Konten';
+      submitBtn.classList.replace('bg-amber-600', 'bg-blue-900');
+      submitBtn.classList.replace('hover:bg-amber-700', 'hover:bg-blue-800');
+      cancelEditBtn.classList.add('hidden');
+    });
+
+    form.addEventListener('submit', function() {
+      document.getElementById('hiddenContent').value = quill.getSemanticHTML();
+    });
+  });
+</script>
+
+<style is:global>
+  /* === STYLE TABEL PROFESIONAL (UNTUK PREVIEW & HALAMAN DEPAN) === */
+  .preview-article-style table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 1.5rem 0 !important;
+    font-size: 0.95rem !important;
+    background-color: #ffffff;
+    border-radius: 8px !important;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Baris Pertama / Header Otomatis Menjadi Profesional */
+  .preview-article-style table tr:first-child {
+    background-color: #0f172a !important; /* Warna Gelap Premium Slate-900 */
+    font-weight: 700 !important;
+  }
+
+  .preview-article-style table th, 
+  .preview-article-style table tr:first-child td {
+    color: #ffffff !important; /* Memaksa warna teks judul menjadi putih bersih */
+    padding: 12px 16px !important;
+    text-align: left !important;
+    border: none !important;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* Sel Isi Data */
+  .preview-article-style table td {
+    padding: 12px 16px !important;
+    border-bottom: 1px solid #e2e8f0 !important; /* Garis tipis abu-abu elegan */
+    color: #334155 !important;
+  }
+
+  /* Zebra Striping (Warna Baris Selang-Seling) */
+  .preview-article-style table tr:nth-child(even) {
+    background-color: #f8fafc !important; /* Warna putih-abu tipis */
+  }
+
+  /* Efek Hover Baris Data */
+  .preview-article-style table tr:hover:not(:first-child) {
+    background-color: #f1f5f9 !important;
+    transition: background-color 0.15s ease;
+  }
+
+  /* ======================================================== */
+  
+  .ql-toolbar.ql-snow {
+    border-top: none !important; border-left: none !important; border-right: none !important;
+    border-bottom: 1px solid #e5e7eb !important; background-color: #f8fafc; padding: 8px 12px !important;
+  }
+  .ql-container.ql-snow { border: none !important; }
+  .ql-editor { min-height: 16rem; }
+  
+  .ql-toolbar .ql-formats button.ql-preview {
+    width: auto !important; padding: 0 14px; border-radius: 6px;
+    background-color: #e0e7ff; color: #3730a3; font-weight: 700; font-size: 12px;
+    display: flex; align-items: center; gap: 6px; float: right; margin-left: 8px;
+  }
+  .ql-toolbar .ql-formats button.ql-preview::before { content: '👁️ Preview'; }
+
+  .preview-article-style p { margin-bottom: 1.25rem; }
+  .preview-article-style h1, .preview-article-style h2 { font-weight: 800; color: #111827; margin-top: 2rem; margin-bottom: 1rem; }
+  .preview-article-style ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1.25rem; }
+  .preview-article-style ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1.25rem; }
+  
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+</style>

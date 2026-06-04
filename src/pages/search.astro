@@ -1,0 +1,94 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+
+const url = new URL(Astro.request.url);
+const query = url.searchParams.get('q') || '';
+
+let results: any[] = [];
+let errorMessage = '';
+
+if (query) {
+  // Menambahkan kolom 'images' ke dalam query .select()
+  const [postsResponse, newsResponse] = await Promise.all([
+    supabase.from('posts').select('id, title, images').ilike('title', `%${query}%`),
+    supabase.from('news').select('id, title, images').ilike('title', `%${query}%`)
+  ]);
+
+  if (postsResponse.error) errorMessage += `Error posts: ${postsResponse.error.message}. `;
+  if (newsResponse.error) errorMessage += `Error news: ${newsResponse.error.message}.`;
+
+  if (!errorMessage) {
+    const postsData = postsResponse.data?.map(item => ({ ...item, type: 'education' })) || [];
+    const newsData = newsResponse.data?.map(item => ({ ...item, type: 'news' })) || [];
+    results = [...postsData, ...newsData];
+  }
+}
+---
+
+<Layout title={`Search: ${query} - SavoFinance`} isDark={false}>
+  <div class="max-w-6xl mx-auto py-8 md:py-12 px-4 md:px-6 min-h-[60vh]">
+    <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2">Search Results</h1>
+    <p class="text-slate-500 mb-8 text-sm md:text-base">Showing results for: <span class="font-semibold text-cyan-500">"{query}"</span></p>
+
+    {errorMessage && (
+      <div class="p-4 bg-rose-50 text-rose-600 rounded-xl mb-6 font-medium text-sm">
+        {errorMessage}
+      </div>
+    )}
+
+    {results.length === 0 && !errorMessage ? (
+      <div class="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl w-full">
+        <p class="text-slate-400 text-base md:text-lg font-medium">No pages found matching your keyword.</p>
+        <a href="/" class="text-sm text-cyan-500 hover:text-cyan-600 font-bold mt-3 inline-block">← Back to Home</a>
+      </div>
+    ) : (
+      /* GRID UTAMA: 2 kolom di HP (grid-cols-2) dan 3 kolom di Desktop (md:grid-cols-3) */
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+        {results.map((item) => {
+          const itemUrl = item.type === 'news' 
+            ? `/news/${item.id}` 
+            : `/education/general/${item.id}`; 
+            
+          // Logika Gambar: Ambil gambar pertama dari array 'images', jika kosong pakai '/blank.jpg'
+          // Jika di folder public nama file-nya blank.png, silakan ubah teks di bawah ini
+          let imageUrl = '/blank.jpg'; 
+          if (item.images && item.images.length > 0) {
+             imageUrl = item.images[0]; // Mengambil URL dari dalam array
+          }
+
+          return (
+            <a 
+              href={itemUrl} 
+              class="flex flex-col border border-gray-100 rounded-2xl shadow-sm hover:border-cyan-400 hover:shadow-md transition-all bg-white group relative overflow-hidden"
+            >
+              {/* Bagian Atas: Gambar (Aspek rasio 16:9 agar seragam) */}
+              <div class="w-full aspect-video bg-slate-100 relative overflow-hidden">
+                {/* Indikator Type di atas gambar */}
+                <div class="absolute top-0 right-0 bg-white/90 backdrop-blur-sm text-slate-500 text-[9px] md:text-[10px] font-extrabold px-3 py-1.5 rounded-bl-lg uppercase tracking-widest z-10 border-b border-l border-gray-100">
+                  {item.type}
+                </div>
+                
+                {/* Efek zoom perlahan saat kartu di-hover */}
+                <img 
+                  src={imageUrl} 
+                  alt={item.title} 
+                  class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" 
+                  loading="lazy"
+                />
+              </div>
+              
+              {/* Bagian Bawah: Teks Judul */}
+              <div class="p-3 md:p-5 flex flex-col flex-grow">
+                {/* line-clamp-3 membatasi judul maksimal 3 baris agar tinggi kartu tetap rapi */}
+                <h3 class="text-sm md:text-lg font-bold text-slate-800 group-hover:text-cyan-500 transition-colors leading-snug line-clamp-3">
+                  {item.title}
+                </h3>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</Layout>

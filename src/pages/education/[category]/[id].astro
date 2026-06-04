@@ -1,0 +1,160 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import { supabase } from '../../../lib/supabase';
+
+const { id } = Astro.params;
+
+let post = null;
+try {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (!error) post = data;
+} catch (e) {
+  console.error("Gagal memuat:", e);
+}
+
+if (!post) {
+  return Astro.redirect('/');
+}
+---
+
+<Layout title={post.title}>
+  <article class="max-w-3xl mx-auto mt-6 md:mt-12 px-4 md:px-6 mb-32">
+    
+    <div class="flex items-center gap-4 mb-4">
+      {post.category && (
+        <span class="text-xs bg-blue-50 text-blue-900 px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+          {post.category.replace('-', ' ')}
+        </span>
+      )}
+      <span class="text-xs text-gray-400 font-medium">
+        {post.created_at ? new Date(post.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Baru Saja'}
+      </span>
+    </div>
+
+    <h1 class="text-2xl md:text-4xl font-bold tracking-tight text-slate-900 mb-4 leading-snug">
+      {post.title}
+    </h1>
+
+    {/* GAMBAR UTAMA */}
+    {post.images && post.images.length > 0 && (
+      <div class="mb-10 rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+        <Image 
+          src={post.images[0]} 
+          alt={`Gambar ilustrasi untuk artikel: ${post.title}`} 
+          width={800} 
+          height={400} 
+          class="w-full h-auto object-cover max-h-[400px]" 
+          loading="eager" 
+        />
+      </div>
+    )}
+
+    <hr class="border-gray-200 my-6" />
+
+    {/* KONTEN ARTIKEL */}
+    <div class="prose max-w-none" set:html={post.content} />
+
+  </article>
+</Layout>
+
+<style is:global>
+  /* PEMBERSIH TOTAL: Menghapus paksa background dari Quill, KECUALI untuk elemen tabel */
+  .prose *:not(table):not(thead):not(tbody):not(tr):not(th):not(td) {
+    background-color: transparent !important;
+    border-color: transparent !important;
+  }
+
+  .prose p { 
+    font-size: 1.125rem; 
+    color: #374151; 
+    line-height: 1.8; 
+    margin-bottom: 1.5rem; 
+  }
+
+  .prose strong { color: #1e3a8a; font-weight: 700; }
+  
+  .prose h2 { 
+    font-size: 1.5rem; 
+    font-weight: 700; 
+    color: #1e3a8a; 
+    margin-top: 2.5rem; 
+    margin-bottom: 1rem; 
+  }
+
+  /* Gambar di dalam teks artikel (dengan optimasi CSS dasar) */
+  .prose img {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 0.75rem;
+    margin: 2rem auto;
+    display: block;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  /* List & Ol */
+  .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1.5rem; }
+  .prose ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1.5rem; }
+
+
+  /* ==========================================
+     STYLE TABEL PROFESIONAL HALAMAN BACA
+  ============================================= */
+  .prose table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 2rem 0 !important;
+    font-size: 0.95rem !important;
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Baris Pertama / Header Gelap Premium */
+  .prose table tr:first-child {
+    background-color: #0f172a !important; 
+  }
+
+  /* Sel Header */
+  .prose table th, 
+  .prose table tr:first-child td {
+    color: #ffffff !important; 
+    padding: 14px 16px !important;
+    text-align: left !important;
+    border: none !important;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* Memaksa semua teks di dalam baris pertama (termasuk tag bold/strong) menjadi putih */
+  .prose table th *, 
+  .prose table tr:first-child td * {
+    color: #ffffff !important;
+  }
+
+  /* Sel Isi Data */
+  .prose table td {
+    padding: 14px 16px !important;
+    border-bottom: 1px solid #e2e8f0 !important; 
+    color: #334155 !important;
+    border-color: #e2e8f0 !important; /* Memaksa border muncul kembali setelah dihapus pembersih total */
+  }
+
+  /* Zebra Striping (Warna Baris Selang-Seling) */
+  .prose table tr:nth-child(even) {
+    background-color: #f8fafc !important;
+  }
+
+  /* Efek Hover saat baris disentuh mouse */
+  .prose table tr:hover:not(:first-child) {
+    background-color: #f1f5f9 !important;
+    transition: background-color 0.2s ease;
+  }
+</style>

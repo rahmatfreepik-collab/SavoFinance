@@ -1,0 +1,48 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/supabase';
+
+const { data: posts } = await supabase
+  .from('posts')
+  .select('*')
+  .eq('category', 'market-analysis')
+  .order('created_at', { ascending: false });
+---
+<Layout title="Market Analysis - SavoFinance">
+  <div class="w-full min-h-screen pt-24 pb-24 max-w-5xl mx-auto px-6">
+    <div class="mb-12 border-b pb-4">
+      <span class="text-xs font-bold text-blue-900 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">Financial Education</span>
+      <h1 class="text-4xl font-extrabold text-gray-800 mt-2 tracking-tight">Market Analysis</h1>
+      <p class="text-gray-500 mt-2">In-depth macroeconomic analysis, interest rate policies, and the latest market updates.</p>
+    </div>
+
+    <div class="grid gap-8 md:grid-cols-2">
+      {posts && posts.length > 0 ? posts.map((post) => (
+        <article class="relative group p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+          <div>
+            {/* LOGIKA GAMBAR: Menampilkan gambar pertama sebagai thumbnail */}
+            {post.images && post.images.length > 0 && (
+              <div class="mb-4 rounded-lg overflow-hidden h-48">
+                <img src={post.images[0]} alt={post.title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              </div>
+            )}
+            <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-900 transition-colors">{post.title}</h3>
+            <div set:html={post.content} class="text-gray-600 text-sm line-clamp-3 mb-4" />
+          </div>
+          
+          <div class="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-50 mt-4">
+            <span>📅 {post.created_at ? new Date(post.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Just Now'}</span>
+            
+            {/* LINK SUPER: Menutupi seluruh kartu dengan before:inset-0 */}
+            <a href={`/education/${post.category}/${post.id}`} class="text-blue-900 font-semibold group-hover:underline before:absolute before:inset-0 before:z-10">
+              Read More →
+            </a>
+          </div>
+        </article>
+      )) : (
+        <div class="col-span-full text-center py-12 text-gray-400 bg-white rounded-xl border border-dashed border-gray-200">
+          <p class="italic">No articles available in the Crypto Basics category at the moment.</p>
+        </div>
+      )}
+    </div>
+</Layout>

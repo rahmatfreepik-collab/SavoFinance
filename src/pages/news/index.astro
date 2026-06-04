@@ -1,0 +1,118 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import { supabase } from '../../lib/supabase';
+
+
+// Fetch the news data from Supabase
+const { data: newsItems, error } = await supabase
+  .from('news')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+if (error) {
+  console.error('Failed to fetch news data:', error.message);
+}
+---
+
+{/* Set the page title to English */}
+<Layout title="Global Economic News - SavoFinance">
+  
+  {/* PERBAIKAN UTAMA: 
+    Membungkus seluruh halaman dengan 'bg-white' dan 'w-full' secara penuh,
+    serta memberikan 'pt-24' (padding-top) agar konten turun dengan pas di bawah komponen navbar.
+  */}
+  <div class="w-full bg-white text-slate-900 min-h-screen pt-24 pb-24 px-4 md:px-24">
+    <main class="max-w-6xl mx-auto">
+      
+      {/* HEADER SECTION: Fully Translated to English */}
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-black text-slate-900 mb-3 tracking-tight">
+          Global Economic News
+        </h1>
+        <p class="text-gray-500 max-w-2xl mx-auto leading-relaxed font-light">
+          Track real-time market sentiment, macroeconomic policy shifts, and global financial trends impacting your wealth.
+        </p>
+      </div>
+
+      <hr class="border-gray-100 mb-10" />
+
+      {/* ERROR & EMPTY STATE: Fully Translated to English */}
+      {error || !newsItems || newsItems.length === 0 ? (
+        <div class="text-center py-16 text-gray-400 bg-slate-50 rounded-2xl border border-dashed border-gray-200">
+          <p class="font-bold text-slate-700">No news updates available at the moment.</p>
+          <p class="text-sm text-gray-400 mt-1">Please insert data into the 'news' table inside your Supabase database.</p>
+        </div>
+      ) : (
+        /* NEWS GRID */
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* PERBAIKAN: Menambahkan parameter "index" di sini */}
+          {newsItems.map((news, index) => {
+            const thumbnailImage = news.images && news.images.length > 0 
+              ? news.images[0] 
+              : "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=600&q=80";
+
+            return (
+              <div class="bg-white rounded-2xl border border-gray-200/70 flex flex-col justify-between hover:shadow-2xl transition-all duration-300 relative group overflow-hidden">
+                <div>
+                  {/* IMAGE CONTAINER */}
+                  <div class="h-52 w-full overflow-hidden bg-slate-100 relative">
+                    {/* Perbaikan Audit: Menambahkan loading optimization berdasarkan index */}
+                    <Image 
+                      src={thumbnailImage} 
+                      alt={news.title || "SavoFinance News Thumbnail"} 
+                      width={600}
+                      height={400}
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading={index < 2 ? "eager" : "lazy"}
+                      decoding="async"
+                    />
+                    {news.source && (
+                      /* Badge diselaraskan menggunakan warna slate gelap premium */
+                      <span class="absolute top-4 left-4 bg-slate-950/90 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md z-10">
+                        {news.source}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* TEXT CONTENT */}
+                  <div class="p-6 pb-0">
+                    {/* Date Formatted into English (en-US) */}
+                    <div class="text-xs text-gray-400 font-medium mb-2">
+                      {new Date(news.created_at).toLocaleDateString('en-US', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        year: 'numeric' 
+                      })}
+                    </div>
+
+                    <h2 class="text-xl font-extrabold text-slate-800 mb-3 group-hover:text-blue-900 transition-colors leading-snug">
+                      <a href={`/news/${news.id}`} class="after:absolute after:inset-0">
+                        {news.title}
+                      </a>
+                    </h2>
+
+                    {/* Content Preview Block */}
+                    <div set:html={news.content} class="text-gray-500 text-sm line-clamp-2 mb-4 entry-preview relative z-10 leading-relaxed font-normal" />
+                  </div>
+                </div>
+
+                {/* BOTTOM ACTION */}
+                <div class="p-6 pt-0">
+                  <a href={`/news/${news.id}`} class="text-blue-600 text-xs font-bold flex items-center gap-1 relative z-10 uppercase tracking-wider group-hover:text-blue-800 transition-colors">
+                    READ MORE <span class="transform group-hover:translate-x-1 transition-transform">&rarr;</span>
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+    </main>
+  </div>
+</Layout>
+
+<style is:global>
+  .entry-preview p { display: inline; }
+</style>

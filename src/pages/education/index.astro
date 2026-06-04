@@ -1,0 +1,32 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+// List of available categories
+const categories = [
+  { name: 'Personal Finance', slug: 'personal-finance', desc: 'Manage your budget and grow your savings.' },
+  { name: 'Investment', slug: 'investment', desc: 'A complete guide to stocks and mutual funds.' },
+  { name: 'Crypto Basics', slug: 'crypto-basics', desc: 'Understand digital assets and blockchain technology.' },
+  { name: 'Market Analysis', slug: 'market-analysis', desc: 'Deep-dive insights into global financial markets.' },
+];
+---
+
+<Layout title="Financial Education">
+  <div class="max-w-5xl mx-auto px-6 py-24">
+    <div class="mb-16">
+      <h1 class="text-4xl font-extrabold text-blue-950">Financial Education Center</h1>
+      <p class="text-lg text-gray-600 mt-4">Select a topic you would like to explore today.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      {categories.map(cat => (
+        <a href={`/education/${cat.slug}`} class="p-8 border border-gray-100 rounded-2xl bg-white hover:shadow-xl transition-all duration-300 group">
+          <h2 class="text-2xl font-bold text-gray-800 group-hover:text-blue-900">{cat.name}</h2>
+          <p class="text-gray-500 mt-3">{cat.desc}</p>
+          <div class="mt-6 text-blue-900 font-semibold flex items-center gap-2">
+            View Articles →
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</Layout>

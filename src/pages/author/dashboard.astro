@@ -1,0 +1,223 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Author Dashboard - SavoFinance" isDark={false}>
+  <div class="w-screen -mx-24 flex flex-col bg-slate-50 min-h-screen pt-32 pb-20 px-6 md:px-24">
+    <div class="max-w-4xl mx-auto w-full">
+      
+      <div id="loginSection" class="max-w-md mx-auto w-full bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-200 hidden">
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Author Login</h1>
+          <p class="text-slate-500 text-sm">Sign in to manage your platform.</p>
+        </div>
+
+        <form id="formLogin" class="flex flex-col gap-4">
+          <div>
+            <label for="email" class="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+            <input type="email" id="email" name="email" required placeholder="name@example.com" class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 transition-colors" />
+          </div>
+
+          <div>
+            <label for="password" class="block text-sm font-bold text-slate-700 mb-2">Password</label>
+            <input type="password" id="password" name="password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-3 transition-colors" />
+          </div>
+
+          <button type="submit" id="btnLogin" class="w-full mt-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-blue-600/30">
+            Sign In
+          </button>
+          <span id="statusLogin" class="text-xs text-center font-bold text-rose-500 hidden"></span>
+        </form>
+      </div>
+
+      <div id="dashboardSection" class="w-full hidden flex flex-col gap-10">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Author Dashboard</h1>
+            <p class="text-slate-500">Welcome back! Manage your content and read user feedback.</p>
+          </div>
+          <button id="btnLogout" class="px-5 py-2.5 bg-white hover:bg-rose-50 hover:text-rose-600 text-slate-600 border border-slate-200 font-bold rounded-xl transition-colors text-sm shadow-sm">
+            Sign Out
+          </button>
+        </div>
+
+        <div class="flex flex-col items-center justify-center bg-white rounded-3xl p-10 shadow-xl shadow-slate-200/50 border border-slate-200 text-center">
+          <div class="bg-blue-50 p-4 rounded-2xl text-blue-600 mb-4 shadow-sm border border-blue-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-slate-800 mb-1">Content Management</h3>
+          <p class="text-slate-400 text-sm max-w-sm mb-6">Publish new articles, adjust configurations, or update your main workspace resources.</p>
+          
+          <a href="/admin" class="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 transform hover:-translate-y-0.5 flex items-center gap-2">
+            <span>Upload Content</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </a>
+        </div>
+
+        <a href="/author/messages" class="block bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 border border-slate-200 hover:border-blue-400 hover:shadow-slate-300/40 transition-all group">
+          <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+            <div class="flex items-center gap-3">
+              <div class="bg-emerald-50 p-2.5 rounded-xl text-emerald-600 border border-emerald-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">Recent Messages</h2>
+                <p class="text-xs text-slate-400">Previewing the latest 4 items</p>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-blue-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+              View All Messages 
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="text-slate-400 text-xs font-bold uppercase tracking-wider bg-slate-50/60">
+                  <th class="p-3 pl-4 rounded-l-xl">Date</th>
+                  <th class="p-3">Sender</th>
+                  <th class="p-3">Subject</th>
+                  <th class="p-3 pr-4 rounded-r-xl">Message Preview</th>
+                </tr>
+              </thead>
+              <tbody id="tablePesanBody" class="text-sm text-slate-600 divide-y divide-slate-100">
+                <tr id="loadingRow">
+                  <td colspan="4" class="p-6 text-center text-slate-400 italic">Loading recent messages...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </a>
+
+      </div>
+
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const loginSection = document.getElementById('loginSection');
+  const dashboardSection = document.getElementById('dashboardSection');
+  const formLogin = document.getElementById('formLogin') as HTMLFormElement;
+  const btnLogin = document.getElementById('btnLogin');
+  const statusLogin = document.getElementById('statusLogin');
+  const btnLogout = document.getElementById('btnLogout');
+  const tablePesanBody = document.getElementById('tablePesanBody');
+
+  checkSession();
+
+  async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      loginSection?.classList.remove('hidden');
+      dashboardSection?.classList.add('hidden');
+    } else {
+      loginSection?.classList.add('hidden');
+      dashboardSection?.classList.remove('hidden');
+      fetchRecentMessages();
+    }
+  }
+
+  // Fungsi khusus mengambil 4 pesan terbaru (.limit(4))
+  async function fetchRecentMessages() {
+    try {
+      const { data, error } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(4); // Hanya ambil maksimal 4 baris
+
+      if (error) throw error;
+
+      if (tablePesanBody) {
+        if (!data || data.length === 0) {
+          tablePesanBody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">No messages received yet.</td></tr>`;
+          return;
+        }
+
+        tablePesanBody.innerHTML = data.map((msg: any) => {
+          const tanggal = new Date(msg.created_at).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          // Memotong teks jika terlalu panjang di dalam widget preview
+          const ringkasanPesan = msg.message.length > 60 ? msg.message.substring(0, 60) + '...' : msg.message;
+
+          return `
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <td class="p-3 pl-4 whitespace-nowrap text-slate-400 text-xs font-medium">${tanggal}</td>
+              <td class="p-3">
+                <div class="font-bold text-slate-700">${msg.name}</div>
+                <div class="text-xs text-slate-400">${msg.email}</div>
+              </td>
+              <td class="p-3 font-semibold text-slate-600 truncate max-w-[150px]">${msg.subject || '<span class="text-slate-300 italic">No Subject</span>'}</td>
+              <td class="p-3 pr-4 text-slate-500 max-w-xs truncate">${ringkasanPesan}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    } catch (error: any) {
+      if (tablePesanBody) {
+        tablePesanBody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-rose-500 font-semibold">✕ Error: ${error.message}</td></tr>`;
+      }
+    }
+  }
+
+  // Event: Proses Login
+  if (formLogin) {
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!btnLogin || !statusLogin) return;
+
+      const originalBtnText = btnLogin.innerText;
+      btnLogin.innerText = 'Signing In...';
+      // @ts-ignore
+      btnLogin.disabled = true;
+      statusLogin.classList.add('hidden');
+
+      const formData = new FormData(e.target as HTMLFormElement);
+      const email = formData.get('email') as string;
+      const password = formData.get('password') as string;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        statusLogin.innerText = `✕ Login Failed: ${error.message}`;
+        statusLogin.classList.remove('hidden');
+        btnLogin.innerText = originalBtnText;
+        // @ts-ignore
+        btnLogin.disabled = false;
+      } else {
+        formLogin.reset();
+        btnLogin.innerText = originalBtnText;
+        // @ts-ignore
+        btnLogin.disabled = false;
+        checkSession();
+      }
+    });
+  }
+
+  // Event: Proses Logout
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      checkSession();
+    });
+  }
+</script>

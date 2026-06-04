@@ -1,0 +1,136 @@
+---
+// src/pages/edit-[id].astro
+import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+
+// 1. Tangkap parameter ID langsung dari URL dinamis
+const { id } = Astro.params;
+
+let post = null;
+let message = '';
+let isError = false;
+
+// 2. Ambil data artikel yang akan diedit dari database Supabase
+try {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) {
+    return Astro.redirect('/'); // Jika ID ngawur, kembalikan ke beranda
+  }
+  post = data;
+} catch (e) {
+  return Astro.redirect('/');
+}
+
+// 3. Proses Backend: Eksekusi perubahan data saat tombol Simpan ditekan (Method POST)
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const title = formData.get('title')?.toString();
+    const category = formData.get('category')?.toString();
+    const content = formData.get('content')?.toString();
+
+    if (!title || !content || !category) {
+      message = 'Seluruh kolom form wajib Anda isi!';
+      isError = true;
+    } else {
+      // Jalankan query update ke tabel posts Supabase
+      const { error } = await supabase
+        .from('posts')
+        .update({ title, category, content })
+        .eq('id', id);
+
+      if (error) {
+        message = `Gagal memperbarui database: ${error.message}`;
+        isError = true;
+      } else {
+        message = 'Postingan Anda berhasil diperbarui secara instan!';
+        isError = false;
+        
+        // Refresh data objek post di halaman agar form menampilkan teks terbaru
+        const { data } = await supabase.from('posts').select('*').eq('id', id).single();
+        if (data) post = data;
+      }
+    }
+  } catch (e) {
+    message = 'Terjadi gangguan pada koneksi sistem lokal.';
+    isError = true;
+  }
+}
+---
+
+<Layout title={`Edit Artikel: ${post.title}`}>
+  <div class="max-w-3xl mx-auto mt-40 px-6 mb-32">
+    
+    <div class="mb-8 border-b border-gray-100 pb-4">
+      <span class="text-[10px] bg-blue-900 text-white px-2.5 py-1 rounded font-bold uppercase tracking-wider">
+        Sistem Admin Editor
+      </span>
+      <h1 class="text-3xl font-extrabold text-blue-950 tracking-tight mt-3">Edit Postingan</h1>
+      <p class="text-xs text-gray-400 mt-1 font-mono">ID Referensi: {id}</p>
+    </div>
+
+    {message && (
+      <div class={`p-4 rounded-xl text-xs font-semibold mb-6 border ${isError ? 'bg-red-50 border-red-100 text-red-700' : 'bg-green-50 border-green-100 text-green-700'}`}>
+        {message}
+      </div>
+    )}
+
+    <form method="POST" class="flex flex-col gap-6">
+      
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-bold text-gray-600 uppercase tracking-wide">Judul Artikel</label>
+        <input 
+          type="text" 
+          name="title" 
+          value={post.title}
+          class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 font-medium text-gray-800"
+          required
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-bold text-gray-600 uppercase tracking-wide">Kategori Finansial</label>
+        <select 
+          name="category" 
+          class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-900 font-medium text-gray-800"
+        >
+          <option value="personal-finance" selected={post.category === 'personal-finance'}>Personal Finance</option>
+          <option value="crypto-basics" selected={post.category === 'crypto-basics'}>Crypto Basics</option>
+          <option value="market-analysis" selected={post.category === 'market-analysis'}>Market Analysis</option>
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-bold text-gray-600 uppercase tracking-wide">Isi Konten (Format Kode HTML)</label>
+        <textarea 
+          name="content" 
+          rows="14" 
+          class="px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 font-mono text-gray-700 leading-relaxed bg-slate-50/50"
+          required
+        />{post.content}</textarea>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button 
+          type="submit" 
+          class="bg-blue-900 text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-800 transition shadow-sm"
+        >
+          Simpan Perubahan
+        </button>
+        <a 
+          href={`/education/${post.category}/${post.id}`} 
+          class="border border-gray-200 text-gray-500 px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-gray-50 transition text-center"
+        >
+          Pratinjau Artikel
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+</Layout>

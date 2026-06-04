@@ -1,11 +1,360 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase';
+import { Image } from 'astro:assets';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+// Fetch the 4 LATEST news items from the 'news' table
+const { data: newsItems, error } = await supabase
+  .from('news')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .limit(4);
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Financial Protection Starts Here - SavoFinance" isDark={true}>
+  {/* Main Container */}
+  <div class="-mx-4 md:-mx-24 -mt-24 flex flex-col bg-slate-950 overflow-x-hidden">
+    
+    {/* =================================================== */}
+    {/* 1. HERO SECTION: OPTION 3 HEADLINE (ENGLISH)        */}
+    {/* =================================================== */}
+    <section id="hero-container" class="w-full bg-slate-950 text-slate-100 pt-32 md:pt-72 pb-16 md:pb-36 px-4 md:px-24 relative z-10 overflow-hidden group/hero">
+      
+      {/* ── [DESKTOP ONLY] FAINT BACKGROUND TEXT ── */}
+      <div class="hidden md:flex absolute inset-0 items-center justify-center pointer-events-none select-none z-0">
+        <h2 class="text-[12vw] font-black tracking-tighter text-slate-900/40 uppercase">
+          savofinance
+        </h2>
+      </div>
+
+      {/* ── [DESKTOP ONLY] FLASHLIGHT TEXT WITH SMOOTH BLUR FEATHER ── */}
+      <div 
+        id="flashlight-text" 
+        class="hidden md:flex absolute inset-0 items-center justify-center pointer-events-none select-none z-0 opacity-0 group-hover/hero:opacity-100 transition-opacity duration-300"
+        style="mask-image: radial-gradient(circle 100px at 0px 0px, black 20%, transparent 100%); -webkit-mask-image: radial-gradient(circle 100px at 0px 0px, black 20%, transparent 100%);"
+      >
+        <h2 class="text-[12vw] font-black tracking-tighter text-white uppercase drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+          savofinance
+        </h2>
+      </div>
+
+      {/* ── [SMARTPHONE ONLY] STATIC LOW-OPACITY TEXT ── */}
+      <div class="flex md:hidden absolute inset-0 items-center justify-center pointer-events-none select-none z-0 opacity-10 px-4 text-center">
+        <h2 class="text-6xl font-black tracking-tighter text-slate-400 uppercase">
+          savofinance
+        </h2>
+      </div>
+
+      {/* ── HERO CONTENT: SOLID MINIMALIST HEADLINE ── */}
+      <div class="max-w-5xl mx-auto text-center flex flex-col items-center relative z-10">
+        <h1 class="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white mb-5 md:mb-8 leading-[1.15] max-w-4xl">
+        Financial Protection <br />Starts Here.
+            </h1>
+        <p class="text-sm md:text-xl text-slate-400 max-w-2xl leading-relaxed font-light">
+          More than just an analytical platform; this is your personal control room to monitor, learn, and master the movement of global capital flows.
+        </p>
+      </div>
+    </section>
+
+    {/* =================================================== */}
+    {/* 2. LIGHT SECTION (EDUCATION, NEWS & CALCULATOR)     */}
+    {/* =================================================== */}
+    <div class="w-full bg-white text-slate-900 py-20 px-4 md:px-24 relative z-20 shadow-[0_-20px_60px_rgba(0,0,0,0.4)] rounded-t-[2.5rem]">
+      <div class="max-w-6xl mx-auto flex flex-col gap-24">
+        
+        {/* A. SUB-SECTION: EDUCATION */}
+        <section>
+          <div class="flex items-end justify-between mb-10">
+            <div>
+              <h2 class="text-2xl font-extrabold tracking-tight text-slate-900">Educational Insights</h2>
+              <p class="text-sm text-gray-500 mt-1">Master financial essentials up to deep-dive market analysis.</p>
+            </div>
+            <a href="/education" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider">
+              View All Education &rarr;
+            </a>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <a href="/education/personal-finance" class="aspect-square p-6 bg-slate-50 border border-gray-100 rounded-2xl flex flex-col justify-between hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 group overflow-hidden relative">
+              <div class="flex-1 flex items-center justify-center w-full mb-4">
+                <Image src="/Personal-Finance.webp" alt="Personal Finance" width={200} height={200} class="w-3/5 h-auto object-contain transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300" />
+              </div>
+              <h3 class="font-extrabold text-slate-800 text-base group-hover:text-blue-900 transition-colors leading-snug text-center md:text-left">Personal Finance</h3>
+            </a>
+            <a href="/education/investment" class="aspect-square p-6 bg-slate-50 border border-gray-100 rounded-2xl flex flex-col justify-between hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 group overflow-hidden relative">
+              <div class="flex-1 flex items-center justify-center w-full mb-4">
+                <Image src="/Investment.webp" alt="Investment" width={200} height={200} class="w-3/5 h-auto object-contain transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300" />
+              </div>
+              <h3 class="font-extrabold text-slate-800 text-base group-hover:text-blue-900 transition-colors leading-snug text-center md:text-left">Investment</h3>
+            </a>
+            <a href="/education/crypto-basics" class="aspect-square p-6 bg-slate-50 border border-gray-100 rounded-2xl flex flex-col justify-between hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 group overflow-hidden relative">
+              <div class="flex-1 flex items-center justify-center w-full mb-4">
+                <Image src="/Crypto-Basics.webp" alt="Crypto Basics" width={200} height={200} class="w-3/5 h-auto object-contain transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300" />
+              </div>
+              <h3 class="font-extrabold text-slate-800 text-base group-hover:text-blue-900 transition-colors leading-snug text-center md:text-left">Crypto Basics</h3>
+            </a>
+            <a href="/education/market-analysis" class="aspect-square p-6 bg-slate-50 border border-gray-100 rounded-2xl flex flex-col justify-between hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 group overflow-hidden relative">
+              <div class="flex-1 flex items-center justify-center w-full mb-4">
+                <Image src="/Market-Analysis.webp" alt="Market Analysis" width={200} height={200} class="w-3/5 h-auto object-contain transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300" />
+              </div>
+              <h3 class="font-extrabold text-slate-800 text-base group-hover:text-blue-900 transition-colors leading-snug text-center md:text-left">Market Analysis</h3>
+            </a>
+          </div>
+        </section>
+
+        {/* B. SUB-SECTION: NEWS */}
+        <section class="border-t border-gray-100 pt-16">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Global Economic News</h2>
+            <p class="text-sm text-gray-500 max-w-xl mx-auto leading-relaxed">
+              Track market sentiment, macroeconomic shifts, and real-time financial trends that impact your wealth.
+            </p>
+          </div>
+          
+          <div class="grid gap-8 md:grid-cols-2">
+            {newsItems && newsItems.length > 0 ? (
+              newsItems.map((news) => {
+                const thumbnailImage = news.images && news.images.length > 0 ? news.images[0] : "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=60";
+                return (
+                  <a href={`/news/${news.id}`} class="group block bg-white rounded-2xl overflow-hidden border border-gray-200/70 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between relative">
+                    <div>
+                      <div class="w-full h-48 bg-slate-100 relative overflow-hidden">
+                        <Image src={thumbnailImage} alt={news.title} width={800} height={400} loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        {news.source && <span class="absolute top-4 left-4 bg-slate-950/80 backdrop-blur-sm text-[10px] font-bold tracking-widest text-white px-2.5 py-1 rounded-md uppercase z-10">{news.source}</span>}
+                      </div>
+                      <div class="p-6 pb-0">
+                        <span class="text-xs text-gray-400 font-medium">
+                          {news.created_at ? new Date(news.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Just Now'}
+                        </span>
+                        <h3 class="text-xl font-extrabold text-slate-800 group-hover:text-blue-900 transition-colors mt-2 mb-3 line-clamp-2 leading-snug">{news.title}</h3>
+                        <p class="text-gray-500 text-sm line-clamp-2 mb-4 leading-relaxed font-normal">{news.content ? news.content.replace(/<[^>]*>/g, '') : ''}</p>
+                      </div>
+                    </div>
+                    <div class="p-6 pt-0">
+                      <span class="text-xs font-bold text-blue-600 group-hover:text-blue-800 flex items-center gap-1 uppercase tracking-wider">
+                        MORE <span class="transform group-hover:translate-x-1 transition-transform">&rarr;</span>
+                      </span>
+                    </div>
+                  </a>
+                );
+              })
+            ) : (
+              <div class="col-span-full text-center py-16 text-gray-400 bg-slate-50 rounded-2xl border border-dashed border-gray-200"><p class="italic">No news items available at the moment.</p></div>
+            )}
+          </div>
+        </section>
+
+        {/* C. SUB-SECTION: WEALTH PROTECTION CALCULATOR */}
+        <section class="border-t border-gray-100 pt-16">
+          <div class="text-center mb-12">
+            <span class="text-blue-600 font-bold tracking-wider uppercase text-sm">Wealth Protection</span>
+            <h2 class="text-3xl font-black text-slate-900 tracking-tight mt-2 mb-4">Inflation Erosion Simulator</h2>
+            <p class="text-sm text-gray-500 max-w-2xl mx-auto leading-relaxed">
+              Idle cash is shrinking wealth. Calculate how much purchasing power your savings will lose if left uninvested over time.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl shadow-slate-200/50 border border-slate-200 flex flex-col gap-8">
+            
+            {/* Top Grid: Inputs & Monitor */}
+            <div class="flex flex-col md:flex-row gap-10">
+              {/* Input Column (Control Panel) */}
+              <div class="w-full md:w-1/2 flex flex-col gap-6 justify-center">
+                <div>
+                  <label for="cashAmount" class="block text-sm font-bold text-slate-700 mb-2">Current Cash Amount</label>
+                  <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                    <input type="number" id="cashAmount" value="100000" class="w-full bg-slate-50 border border-slate-200 text-slate-900 text-lg font-semibold rounded-xl focus:ring-blue-500 focus:border-blue-500 block pl-8 p-3 transition-colors" />
+                  </div>
+                </div>
+                
+                <div>
+                  <div class="flex justify-between mb-2">
+                    <label for="yearsSlider" class="block text-sm font-bold text-slate-700">Time Horizon</label>
+                    <span class="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded" id="yearsDisplay">10 Years</span>
+                  </div>
+                  <input type="range" id="yearsSlider" min="1" max="30" step="1" value="10" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                </div>
+
+                <div>
+                   <div class="flex justify-between mb-2">
+                    <label for="inflationSlider" class="block text-sm font-bold text-slate-700">Annual Inflation Rate</label>
+                    <span class="text-sm font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded" id="inflationDisplay">5%</span>
+                  </div>
+                  <input type="range" id="inflationSlider" min="1" max="15" step="0.5" value="5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500" />
+                </div>
+
+                <div>
+                  <div class="flex justify-between mb-2">
+                    <label for="investmentSlider" class="block text-sm font-bold text-slate-700">Investment Return (Est.)</label>
+                    <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded" id="investmentDisplay">8%</span>
+                  </div>
+                  <input type="range" id="investmentSlider" min="1" max="25" step="0.5" value="8" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
+                </div>
+              </div>
+
+              {/* Results Column (Monitor) */}
+              <div class="w-full md:w-1/2 bg-slate-950 rounded-2xl p-8 text-white flex flex-col justify-center relative overflow-hidden shadow-inner h-full min-h-[300px]">
+                <div class="absolute -right-10 -top-10 opacity-5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-64 w-64" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" /></svg>
+                </div>
+                
+                <p class="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-2 z-10">Remaining Purchasing Power:</p>
+                <div class="z-10 mb-6">
+                  <span id="futureValue" class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">$61,391</span>
+                </div>
+
+                <div class="w-full bg-slate-800 rounded-full h-3 mb-3 z-10 overflow-hidden flex">
+                  <div id="remainingBar" class="bg-blue-500 h-3 rounded-l-full transition-all duration-300" style="width: 61%"></div>
+                  <div id="lostBar" class="bg-rose-500 h-3 rounded-r-full transition-all duration-300" style="width: 39%"></div>
+                </div>
+                
+                <div class="flex justify-between items-start z-10 text-sm">
+                  <div class="text-blue-400 font-medium">Remaining Value</div>
+                  <div class="text-right">
+                    <div class="text-rose-400 font-medium">Value Lost to Inflation</div>
+                    <div id="lostValue" class="text-rose-300 font-bold mt-1">-$38,609</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Section: Discussion & Investment Comparison */}
+            <div class="mt-2 bg-blue-50/50 rounded-2xl p-6 border border-blue-100 flex flex-col md:flex-row items-center gap-8">
+              <div class="flex-1">
+                <h4 class="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                  </svg>
+                  The Cost of Doing Nothing
+                </h4>
+                <p id="summaryText" class="text-slate-600 leading-relaxed text-sm">
+                  If you leave your cash idle, inflation will silently steal <strong class="text-rose-500">-$38,609</strong> of its purchasing power over the next <strong>10 years</strong>.
+                </p>
+              </div>
+              
+              <div class="w-full md:w-px h-[1px] md:h-16 bg-blue-200"></div>
+              
+              <div class="flex-1 bg-white rounded-xl p-5 border border-emerald-100 shadow-sm w-full relative overflow-hidden group">
+                <div class="absolute right-0 top-0 h-full w-1 bg-emerald-400"></div>
+                <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">Potential Value If Invested</span>
+                <div class="text-3xl font-black text-emerald-500 mb-1 tracking-tight" id="investedResultText">$215,892</div>
+                <span class="text-xs text-slate-500 font-medium">Assuming an <span id="summaryInvRate" class="font-bold text-emerald-600">8%</span> annual return.</span>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+  </div>
 </Layout>
+
+{/* =================================================== */}
+{/* 3. JAVASCRIPT: FLASHLIGHT LOGIC & CALCULATOR        */}
+{/* =================================================== */}
+<script>
+  // --- 1. HERO FLASHLIGHT EFFECT ---
+  const hero = document.getElementById('hero-container');
+  const flashlightText = document.getElementById('flashlight-text');
+
+  if (hero && flashlightText && window.innerWidth >= 768) {
+    hero.addEventListener('mousemove', (e) => {
+      const rect = hero.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const maskStyle = `radial-gradient(circle 110px at ${x}px ${y}px, black 20%, transparent 100%)`;
+      
+      flashlightText.style.maskImage = maskStyle;
+      // @ts-ignore
+      flashlightText.style.webkitMaskImage = maskStyle;
+    });
+  }
+
+  // --- 2. WEALTH PROTECTION CALCULATOR ---
+  const cashAmountInput = document.getElementById('cashAmount');
+  const yearsSlider = document.getElementById('yearsSlider');
+  const yearsDisplay = document.getElementById('yearsDisplay');
+  
+  const inflationSlider = document.getElementById('inflationSlider');
+  const inflationDisplay = document.getElementById('inflationDisplay');
+  
+  const investmentSlider = document.getElementById('investmentSlider');
+  const investmentDisplay = document.getElementById('investmentDisplay');
+  
+  const futureValueText = document.getElementById('futureValue');
+  const lostValueText = document.getElementById('lostValue');
+  const remainingBar = document.getElementById('remainingBar');
+  const lostBar = document.getElementById('lostBar');
+
+  const summaryText = document.getElementById('summaryText');
+  const investedResultText = document.getElementById('investedResultText');
+  const summaryInvRate = document.getElementById('summaryInvRate');
+
+  // Format number to USD currency (no decimals)
+  function formatCurrency(number) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(number);
+  }
+
+  function calculateInflation() {
+    if (!cashAmountInput || !yearsSlider || !inflationSlider || !investmentSlider) return;
+
+    // @ts-ignore
+    const amount = parseFloat(cashAmountInput.value) || 0;
+    // @ts-ignore
+    const years = parseInt(yearsSlider.value);
+    // @ts-ignore
+    const inflation = parseFloat(inflationSlider.value);
+    // @ts-ignore
+    const invRate = parseFloat(investmentSlider.value);
+
+    // Update display texts above sliders
+    if (yearsDisplay) yearsDisplay.innerText = `${years} Year${years > 1 ? 's' : ''}`;
+    if (inflationDisplay) inflationDisplay.innerText = `${inflation}%`;
+    if (investmentDisplay) investmentDisplay.innerText = `${invRate}%`;
+
+    // 1. Inflation Calculation (Purchasing Power)
+    const infRateDecimal = inflation / 100;
+    const futureValue = amount / Math.pow((1 + infRateDecimal), years);
+    const lostValue = amount - futureValue;
+
+    // 2. Investment Calculation (Nominal Growth)
+    const invRateDecimal = invRate / 100;
+    const investedNominal = amount * Math.pow((1 + invRateDecimal), years);
+
+    // Update UI Texts for Monitor
+    if (futureValueText) futureValueText.innerText = formatCurrency(futureValue);
+    if (lostValueText) lostValueText.innerText = `-${formatCurrency(lostValue)}`;
+
+    // Calculate percentages for visualization bar
+    const remainingPercentage = amount > 0 ? (futureValue / amount) * 100 : 0;
+    const lostPercentage = amount > 0 ? (lostValue / amount) * 100 : 0;
+
+    if (remainingBar) remainingBar.style.width = `${remainingPercentage}%`;
+    if (lostBar) lostBar.style.width = `${lostPercentage}%`;
+
+    // Update Discussion & Summary Section
+    if (summaryText) {
+      summaryText.innerHTML = `If you leave your cash idle, inflation will silently steal <strong class="text-rose-500">-${formatCurrency(lostValue)}</strong> of its purchasing power over the next <strong>${years} Year${years > 1 ? 's' : ''}</strong>.`;
+    }
+    if (investedResultText) investedResultText.innerText = formatCurrency(investedNominal);
+    if (summaryInvRate) summaryInvRate.innerText = `${invRate}%`;
+  }
+
+  // Event Listeners for automatic real-time calculation
+  if (cashAmountInput) cashAmountInput.addEventListener('input', calculateInflation);
+  if (yearsSlider) yearsSlider.addEventListener('input', calculateInflation);
+  if (inflationSlider) inflationSlider.addEventListener('input', calculateInflation);
+  if (investmentSlider) investmentSlider.addEventListener('input', calculateInflation);
+
+  // Run calculation on initial load
+  calculateInflation();
+</script>

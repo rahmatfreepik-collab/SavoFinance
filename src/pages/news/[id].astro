@@ -1,0 +1,92 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import { supabase } from '../../lib/supabase';
+
+const { id } = Astro.params;
+
+// Ambil data detail berita berdasarkan ID
+const { data: news, error } = await supabase
+  .from('news')
+  .select('*')
+  .eq('id', id)
+  .single();
+
+if (error || !news) {
+  return Astro.redirect('/404');
+}
+
+// LOGIKA PINTAR: Memisahkan konten teks berdasarkan tag paragraf </p>
+// Ini memisahkan isi berita menjadi array paragraf utuh
+const paragraphs = news.content ? news.content.split('</p>').filter(p => p.trim() !== '').map(p => p + '</p>') : [];
+const images = news.images || [];
+---
+
+<Layout title={`${news.title} - SavoFinance`}>
+  <main class="max-w-3xl mx-auto px-4 py-12">
+    
+    <div class="flex items-center gap-2 text-xs text-gray-400 mb-4">
+      <span>
+        {new Date(news.created_at).toLocaleDateString('id-ID', { 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric' 
+        })}
+      </span>
+      {news.source && (
+        <>
+          <span>•</span>
+          <span class="text-blue-600 font-bold uppercase">{news.source}</span>
+        </>
+      )}
+    </div>
+
+    <h1 class="text-2xl md:text-4xl font-black tracking-tight text-slate-900 mb-4 leading-tight">
+      {news.title}
+    </h1>
+
+    <hr class="border-gray-200 mb-8" />
+
+    <div class="prose max-w-none text-gray-700 leading-relaxed space-y-6">
+      {paragraphs.length === 0 ? (
+        <div set:html={news.content} />
+      ) : (
+        paragraphs.map((para, index) => (
+          <>
+            {/* Tampilkan teks paragraf saat ini */}
+            <div set:html={para} />
+
+            {/* JIKA SELESAI PARAGRAF 1 (Index 0): Sisipkan Gambar Ke-1 jika ada */}
+            {index === 0 && images.length > 0 && (
+              <div class="my-6 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm max-h-[400px] flex justify-center">
+                <img src={images[0]} alt="Ilustrasi Konten 1" class="w-full h-full object-cover" />
+              </div>
+            )}
+
+            {/* JIKA SELESAI PARAGRAF 4 (Index 3): Sisipkan Gambar Ke-2 jika ada */}
+            {index === 3 && images.length > 1 && (
+              <div class="my-6 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm max-h-[400px] flex justify-center">
+                <img src={images[1]} alt="Ilustrasi Konten 2" class="w-full h-full object-cover" />
+              </div>
+            )}
+          </>
+        ))
+      )}
+    </div>
+
+    <div class="mt-12 pt-6 border-t border-gray-100">
+      <a href="/news" class="text-blue-600 hover:underline font-medium text-sm flex items-center gap-1">
+        ← Kembali ke Berita
+      </a>
+    </div>
+
+  </main>
+</Layout>
+
+<style>
+  /* FIX: Menghapus bayangan background putih bawaan dari copy-paste editor Quill */
+  .prose :global(*) {
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+</style>
