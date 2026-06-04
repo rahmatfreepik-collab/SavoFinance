@@ -1,0 +1,4 @@
+[vars]
+PUBLIC_SUPABASE_URL = "https://xhlbdjpdmzcyyyuehlql.supabase.co"
+PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_knKW83Pt7_CuNn-WQ1vQQA_7JFqLja8"
+compatibility_flags = [ "nodejs_compat" ]
